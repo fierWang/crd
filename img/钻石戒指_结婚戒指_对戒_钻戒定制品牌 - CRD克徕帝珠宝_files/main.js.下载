@@ -1,0 +1,101 @@
+﻿function storePao() {
+    var username = $("#res_username").val();
+    if (username == undefined || username == null || username == "") {
+        layer.msg('请填写称谓！', { icon: 5 });
+        return;
+    }
+    var phone = $("#res_phone").val();
+    if (!RegMobileNo(phone)) {
+        layer.msg('手机号码错误！', { icon: 5 });
+        return;
+    }
+    var toshope = $("#res_express").val();
+    if (toshope == undefined || toshope == null || toshope == "0") {
+        layer.msg('请在上方选择门店！', { icon: 5 });
+        return;
+    }
+    var reservetime = $("#res_reservetime").val();
+    if (reservetime == undefined || reservetime == null || reservetime == "") {
+        layer.msg('请填写预约时间！', { icon: 5 });
+        return;
+    }
+    //var reservehour = $("#res_reservehour").val();
+    // var Type = $("#res_type").val();
+    // var res_radio = $("input[name='sex'][checked]").val();
+    var data = {};
+    data.username = username;//+ res_radio;
+    data.phone = phone;
+    data.toshope = toshope;
+    data.toshopeStr = $("#res_express").find("option:selected").text();;
+    data.reservetime = reservetime;
+    data.reservehour = "";//reservehour;
+    data.Type = "";// Type;
+    $.ajax({
+        type: "POST",
+        url: "/home/AddReservation",
+        data: data,
+        dataType: "html",
+        async: false,
+        success: function (msg) {
+            if (msg == "1") {
+                layer.msg('预约成功！', { icon: 6 });
+                $("input").val('');
+            }
+            else {
+                layer.msg('预约失败！' + msg, { icon: 5 });
+            }
+        }
+    });
+
+}
+
+//用户登录事件
+function UserLogin(user, pass, oldUrl) {
+    var username = $("#" + user).val();
+    var pass = $("#" + pass).val();
+    if (username == "" || username == "手机/邮箱/用户名") {
+        layer.msg('请输入您的账户！', { icon: 5 });
+        return false;
+    }
+    else if (pass == "") {
+        layer.msg('请输入登录密码！', { icon: 5 });
+        return false;
+    }
+    else if (pass.length < 6) {
+        layer.msg('登录密码输入有误！长度必须6位以上。', { icon: 5 });
+        return false;
+    }
+    else {
+        $.ajax({
+            type: "POST",
+            timeout: 10000,
+            url: "/Account/userLogin",
+            data: { username: username, pass: pass },
+            dataType: "html",
+            beforeSend: function () {
+                layer.msg('登陆中...');
+            },
+            success: function (result) {
+                if (result != "") {
+                    layer.msg('登录名或密码输入有误！', { icon: 5 });
+                }
+                else {
+                    layer.msg('欢迎您回来！', { icon: 6 });
+                    $(".login-pop").hide();
+                    if (oldUrl != undefined && oldUrl != null && oldUrl != "") {
+                        oldPath = oldUrl;
+                    }
+                    if (oldPath != "") {
+                        window.location.href = oldPath;
+                    } else {
+                        window.location.href = "/user/index";
+                    }
+                    UserDiv();
+                }
+            },
+            error: function () {
+
+            }
+        });
+    }
+}

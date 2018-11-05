@@ -1,0 +1,842 @@
+﻿$(document).ready(function () {
+	if (location.host == "www.crd.cn" || location.host == "crd.cchang.me" || location.host == "localhost:4656") {
+		TTShop.GetLoginHtml();
+	}
+	if (location.host == "www.crd.cn" || location.host == "crd.cchang.me" || location.host == "localhost:4656") {
+		loadInfo_Nav();
+		loadInfo_KSXZ();
+		loadInfo_MXDP();
+		loadInfo_Tab();
+	}
+	if (location.host == "m.crd.cn" || location.host == "m.cchang.me" || location.host == "wx.crd.cn" || location.host == "wx.cchang.me") {
+		loadInfo_Tab();
+		loadSpecialPraises();
+	}
+	$("#schProduct").bind("keydown", function (event) {
+		event = event || window.event;
+		if (event.keyCode == 13) {
+			TTShop.SearchProduct();
+			return false;
+		}
+	});
+	//var allcookies = document.cookie;
+});
+
+/****导航条商品信息****/
+function loadInfo_Nav() {
+	var arrID = [];
+	$("dl[datanav]").each(function () {
+		arrID.push($(this).attr("datanav"));
+	});
+	loadGoodsInfo(arrID, "datanav");
+	var arrID1 = [];
+	$("dl[datanavhj]").each(function () {
+		arrID1.push($(this).attr("datanavhj"));
+	});
+	loadGoodsHJ(arrID1, "datanavhj");
+}
+/*******快速选钻********/
+function loadInfo_KSXZ() {
+	var arrID = [];
+	$(".proudctdiv4 li").each(function () {
+		arrID.push($(this).attr("dataks"));
+	});
+	loadGoodsInfo(arrID, "dataks");
+}
+/*****明星单品****/
+function loadInfo_MXDP() {
+	var arrID = [];
+	$(".conrightabout4 li").each(function () {
+		arrID.push($(this).attr("datamx"));
+	});
+	loadGoodsInfo(arrID, "datamx");
+}
+/*****选项卡商品****/
+function loadInfo_Tab() {
+	//砖石选项卡
+	var arrID = [];
+	$("[dataid=\"divgoods\"]").each(function () {
+		arrID.push($(this).attr("datavalue"));
+	});
+	loadGoodsInfo(arrID, "datavalue");
+	//结婚套系
+	var arrID1 = [];
+	$("li[datatx]").each(function () {
+		arrID1.push($(this).attr("datatx"));
+	});
+	loadGoodsInfo(arrID1, "datatx");
+	//黄金选项卡
+	var arrID2 = [];
+	$("[dataid=\"divgold\"]").each(function () {
+		arrID2.push($(this).attr("datavalue"));
+	});
+	loadGoodsHJ(arrID2, "datavalue");
+
+	// 黄金选项卡升级版
+	var arrID3 = [];
+	$("[dataid=\"divgoldadv\"]").each(function () {
+		arrID3.push($(this).attr("datavalue"));
+	});
+	loadGoodsHJAdv(arrID3);
+
+	// 今日金价
+	var arrID4 = [];
+	$("[dataid=\"divjrjj\"]").each(function () {
+		arrID4.push($(this).attr("datavalue"));
+	});
+	loadJrjj(arrID4);
+}
+
+/*****
+ ***title:加载商品信息
+ ***arrID=商品数组
+ ***type=商品类型[快速/导航/明星/选项卡展示]
+ ******/
+function loadGoodsInfo(arrID, type) {
+	if (arrID.length == 0) { return; }
+	$.ajax({
+		type: "POST",
+		timeout: 10000,
+		url: "/common/getGoodsInfo/",
+		data: { ids: arrID.toString() },
+		beforeSend: function () { },
+		success: function (result) {
+			if (result.IsSucess == true) {
+				eval("var data=" + result.DataObj);
+				if (data != undefined && data != null && data.length > 0) {
+					$.each(data, function (i, item) {
+						var id = item.GoodsID;
+						var quantity = item.Quantity;
+						var shelveStatus = item.ShelveStatus;
+						var url = "/product/" + id + ".html";
+						var li = $("[" + type + "=\"" + id + "\"]");         //商品li or dl对象 
+						var spanorg;
+						if (type == "dataks") {//快速选钻
+							var ablank = li.find("a");                       //图片的A标签  
+							var ap = li.find("p");                           //详情的A标签
+							spanorg = li.find(".spanorg");               //详情的价格
+							var divSpan = li.find(".detproindex");           //详情的span标签
+							var ysqhoverbor = li.find(".ysqhoverbor");       //已售罄图层
+							var lijibtnindex = li.find(".lijibtnindex");     //查看文字跳转A标签
+							var goA = li.find(".hovera");                    //跳转页面A标签                          
+							var price = item.IsActivity ? item.ActivityPrice : item.Price;
+							if (ablank != undefined && ablank != null) { //图片
+								var aImg = ablank.find(".dynload");
+								aImg.attr("src", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+								aImg.attr("original", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+								aImg.attr("alt", item.SubName);
+							}
+							if (ap != undefined && ap != null) {//初始详情
+								ap.find("a").html(item.GoodsName);
+								ap.find("span").html(item.SubName);
+								spanorg.html("￥" + price);
+							}
+							if (divSpan != undefined && divSpan != null) { //屏蔽层详情
+								var listSpan = divSpan.find("span");
+								listSpan.eq(0).html("颜色：" + item.Color);
+								listSpan.eq(1).html("净度：" + item.Clarity);
+								listSpan.eq(2).html("切工：" + item.Cut);
+								divSpan.find(".shichang>span").html("￥" + item.MarketPrice);
+								divSpan.find(".vip").html("VIP价：￥" + price);
+							}
+							if (ysqhoverbor.length > 0) {  //跳转[查找相似/查看详情]
+								var strDirectory = item.Directory
+								if (strDirectory == "caibao" || strDirectory == "zubao") {
+									strDirectory = "xq-diaozhui";
+								}
+								goA.attr("href", "/" + strDirectory + "/");
+								lijibtnindex.attr("href", "/" + strDirectory + "/");
+								lijibtnindex.find("span").html("查找相似");
+							} else {
+								goA.attr("href", url);
+								lijibtnindex.attr("href", url);
+								lijibtnindex.find("span").html("查看详情");
+
+							}
+						} else if (type == "datanav") {//导航
+							var aGo = li.find("a");                       //2个A标签
+							var img = li.find("img");                     //图片标签
+							spanprice = li.find(".spanorg");          //价格
+							var price = item.IsActivity ? item.ActivityPrice : item.Price;
+							var aurl = "/product/" + id + ".html";
+							if (aGo.length > 0) {
+								aGo.each(function () {
+									$(this).attr("href", aurl);
+									$(this).attr("title", item.GoodsName);
+								});
+								aGo.eq(1).html(item.GoodsName);
+							}
+							if (img != undefined && img != null) {
+								img.attr("src", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+								img.attr("original", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+								img.attr("alt", item.SubName);
+							}
+							if (spanprice != undefined && spanprice != null) {
+								spanprice.html(price);
+							}
+						}
+						else {//明星和tab可以用一个赋值
+							var aimg = li.find("a");                                //图片的A标签
+							var imgsrc = li.find("a>img");                          //图片的标签
+							var atitle = li.find("p>a");                            //标题的A标签
+							spanprice = li.find("span.spanorg");                //价格的SPAN标签 
+							var price = item.IsActivity ? item.ActivityPrice : item.Price;
+							var arrSpan = li.find("span");
+							var aurl = "/product/" + id + ".html";
+							if (aimg != undefined && aimg != null) {
+								aimg.attr("href", aurl);
+								aimg.attr("title", item.SubName);
+								if (imgsrc != undefined && imgsrc != null) {
+									imgsrc.attr("src", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+									imgsrc.attr("original", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+									imgsrc.attr("alt", item.SubName);
+								}
+							}
+							if (arrSpan.length > 0) {
+								arrSpan.eq(0).html(item.SubName);
+							}
+							if (atitle != undefined && atitle != null) {
+								atitle.attr("href", "/product/" + id + ".html");
+								atitle.attr("title", item.SubName);
+								atitle.html(item.GoodsName);
+							}
+							if (spanprice != undefined && spanprice != null) {
+								spanprice.html(price);
+							}
+						}
+
+						if (type == "datavalue" || type == "datatx") {      //只给选项卡里面的商品加评价总数和最新评价
+							spanprice.after("<p class=\"pjnum\">" + item.CommentCount + "人评价</p>");
+							if (item.Comment != "") {
+								var arrComment = item.Comment.split(':');
+								spanprice.after("<div class=\"pingjia\"><a href=\"" + aurl + "\" target=\"_blank\"><span class=\"review\">" + arrComment[1] + "</span><br /><span class=\"author\">来自于 " + arrComment[0] + " 的评价</span></a></div>");
+							}
+
+							if (quantity <= 0 || shelveStatus == 0) {
+								li.prepend('<div class="ysqpro"><div class="diamshouq"></div></div>');
+							}
+						}
+
+					});
+				}
+			}
+		}, error: function () { }
+	});
+}
+
+/*****
+ ***title:加载黄金信息
+ ***arrID=商品数组
+ ***type=商品类型[导航/选项卡展示]
+ ******/
+function loadGoodsHJ(arrID, type) {
+	if (arrID.length == 0) { return; }
+	$.ajax({
+		type: "POST",
+		timeout: 10000,
+		url: "/common/getHjPrice/",
+		data: { ids: arrID.toString() },
+		beforeSend: function () { },
+		success: function (result) {
+			if (result.IsSucess == true) {
+				eval("var data=" + result.DataObj);
+				if (data != undefined && data != null && data.length > 0) {
+					$.each(data, function (i, item) {
+						var id = item.GoodsID;
+						var aurl = "/product/" + id + ".html";
+						var price = item.PriceAll;
+						var quantity = item.Quantity;
+						var shelveStatus = item.ShelveStatus;
+						var li = $("[" + type + "=\"" + id + "\"]");         //商品li or dl对象 
+						var spanprice;                                      //价格SPAN
+						if (type == "datanavhj") {
+							var aGo = li.find("a");                          //2个A标签
+							var img = li.find("img");                        //图片标签
+							spanprice = li.find("span");                 //价格
+							var price = item.PriceAll;
+							var aurl = "/product/" + id + ".html";
+							if (aGo.length > 0) {
+								aGo.each(function () {
+									$(this).attr("href", aurl);
+									$(this).attr("title", item.GoodsName);
+								});
+								aGo.eq(1).html(item.GoodsName);
+							}
+							if (img != undefined && img != null) {
+								img.attr("src", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+								img.attr("original", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+								img.attr("alt", item.SubName);
+							}
+							if (spanprice != undefined && spanprice != null) {
+								spanprice.html(price);
+							}
+						} else if (type == "datavalue") {
+							var aGo = li.find("a");                           //2个A标签
+							var img = li.find(".dynload");                    //图片标签
+							spanprice = li.find("span");                     //价格
+							var gpriceall = li.find(".gpriceall");           // 总价格
+							var goldweight = li.find(".goldweight");         // 克重
+							var price = item.PriceAll;
+							var aurl = "/product/" + id + ".html";
+							if (aGo.length > 0) {
+								aGo.each(function () {
+									$(this).attr("href", aurl);
+									$(this).attr("title", item.GoodsName);
+								});
+								aGo.eq(1).html(item.GoodsName);
+							}
+							if (img != undefined && img != null) {
+								img.attr("src", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+								img.attr("original", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+								img.attr("alt", item.SubName);
+							}
+							if (gpriceall != undefined && gpriceall != null) {
+								gpriceall.html(parseInt(item.GPriceAll) + "元");
+							}
+							if (goldweight != undefined && goldweight != null) {
+								goldweight.html(item.GoldWeight.toFixed(2) + "克");
+							}
+							if (spanprice != undefined && spanprice != null) {
+								spanprice.html(price + "元/克");
+							}
+						}
+						if (type == "datavalue") { //只给选项卡里面的商品加评价总数和最新评价
+							spanprice.after("<p class=\"pjnum\">" + item.CommentCount + "人评价</p>");
+							if (item.Comment != "") {
+								var arrComment = item.Comment.split(':');
+								spanprice.after("<div class=\"pingjia\"><a href=\"" + aurl + "\" target=\"_blank\"><span class=\"review\">" + arrComment[1] + "</span><br /><span class=\"author\">来自于 " + arrComment[0] + " 的评价</span></a></div>");
+							}
+
+							if (quantity <= 0 || shelveStatus == 0) {
+								li.prepend('<div class="ysqpro"><div class="diamshouq"></div></div>');
+							}
+						}
+					});
+				}
+			}
+		},
+		error: function () {
+		}
+	});
+}
+
+/*****
+ ***title:此为加载黄金信息升级方法 by yeoman 20170627
+ ***arrID=商品数组
+ ***type=商品类型[导航/选项卡展示]
+ ******/
+function loadGoodsHJAdv(arrID) {
+	if (arrID.length == 0) { return; }
+	$.ajax({
+		type: "POST",
+		timeout: 10000,
+		url: "/common/getHjPrice/",
+		data: { ids: arrID.toString() },
+		beforeSend: function () { },
+		success: function (result) {
+			if (result.IsSucess == true) {
+				eval("var data=" + result.DataObj);
+				if (data != undefined && data != null && data.length > 0) {
+					$.each(data, function (i, item) {
+						var id = item.GoodsID;
+						// 链接地址
+						var aurl = "/product/" + id + ".html";
+
+						// 根标签
+						var o = $("[datavalue=\"" + id + "\"]");
+						// 需要加超链接的a标签
+						var goldhref = o.find(".goldhref");
+						// 需要加载图片的标签
+						var img = o.find(".dynload");
+						// 金价
+						var spanprice = o.find(".spanprice");
+						// 总价格
+						var gpriceall = o.find(".gpriceall");
+						// 今日金价*金重
+						var normalprice = o.find(".normalprice");
+						// 需要加载商品名的标签
+						var goodsname = o.find(".goodsname");
+						// 克重 g
+						var goldweight = o.find(".goldweight");
+
+						// 给需要加超链接的a标签写入链接
+						if (goldhref && goldhref.length > 0) {
+							goldhref.each(function () {
+								$(this).attr("href", aurl);
+								$(this).attr("title", item.GoodsName);
+							});
+						}
+						// 加载商品名
+						if (goodsname && goodsname.length > 0) {
+							goodsname.each(function () {
+								$(this).html(item.GoodsName);
+							});
+						}
+
+						// 加载商品图片
+						if (img) {
+							img.attr("src", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+							img.attr("original", "//img.crd.cn/upload/product/P230/" + item.DefaultPicUrl);
+							img.attr("alt", item.SubName);
+						}
+						if (normalprice) {
+						    //normalprice.html(parseInt(item.NormalPrice) + "元")
+						    normalprice.html(parseInt(item.NormalPrice));
+						}
+						if (gpriceall) {
+							gpriceall.html(parseInt(item.GPriceAll) + "元");
+						}
+						if (goldweight) {
+							goldweight.html(item.GoldWeight.toFixed(2) + "g");
+						}
+						if (spanprice) {
+							spanprice.html(item.PriceAll + "元/克");
+						}
+					});
+				}
+			}
+		},
+		error: function () {
+		}
+	});
+}
+
+/*****
+ ***title:加载今日金价 by yeoman 20170627
+ ***arrID=商品数组
+ ***type=商品类型[导航/选项卡展示]
+ ******/
+function loadJrjj(arrId) {
+	if (arrId.length == 0) { return; }
+	$.ajax({
+		type: 'post',
+		url: '/Common/GetGoldPrice',
+		success: function (msg) {
+			if (msg != "[]") {
+				eval("var data=" + msg);
+				if (data != undefined && data != null && data.length > 0) {
+					var goldhtml = "";
+					$.each(data, function (i, item) {
+						// 根标签
+						var o;
+						switch (item.Name) {
+						case "计价黄金":
+							o = $("[datavalue=\"jjhj\"]");
+							break;
+						case "3D黄金":
+							o = $("[datavalue=\"d3hj\"]");
+							break;
+						case "铂金":
+							o = $("[datavalue=\"ptbj\"]");
+							break;
+						default:
+							o = null;
+						}
+						if (o) {
+							var hjname = o.find(".hjname");
+							var hjprice = o.find(".hjprice");
+							var hjworkprice = o.find(".hjworkprice");
+
+							hjname.html(item.Name);
+							hjprice.html(item.Price);
+							hjworkprice.html(item.WorkPrice);
+						}
+					});
+					$("#goldhtml").html(goldhtml);
+				}
+			}
+		}
+	});
+}
+
+/*****
+ ***title:加载专题点赞数
+ ***arrID=专题数组
+ ******/
+function loadSpecialPraises() {
+	var arrID = [];
+	$("[dataid=\"divspecial\"]").each(function () {
+		arrID.push($(this).attr("datavalue"));
+	});
+	if (arrID.length == 0) { return; }
+	$.ajax({
+		type: "POST",
+		timeout: 10000,
+		url: "/common/getSpecialPraises/",
+		data: { ids: arrID.toString() },
+		beforeSend: function () { },
+		success: function (result) {
+			if (result.IsSucess == true) {
+				eval("var data=" + result.DataObj);
+				if (data != undefined && data != null && data.length > 0) {
+					$.each(data, function (i, item) {
+						var id = item.SID;
+						var pObj = $("div[datavalue='" + id + "'] p");
+						if (pObj && pObj.length > 0) {
+							pObj.html(item.Praises);
+						}
+					});
+				}
+			}
+		},
+		error: function () {
+		}
+	});
+}
+
+/*****
+ ***title:专题点赞
+ ***id=专题ID
+ ******/
+function specialPraises(id) {
+	$.ajax({
+		type: "POST",
+		url: "/special/UpdateSpecialPraises",
+		data: {
+			"id": id
+		},
+		async: false,
+		beforeSend: function () {
+		},
+		success: function (result) {
+			if (result.IsSucess === true) {
+				var pObj = $("div[datavalue='" + id + "'] p");
+				if (pObj && pObj.length > 0) {
+					pObj.html(result.Msg);
+				}
+			}
+			else {
+				layer.msg(result.Msg, { icon: 5 });
+			}
+		},
+		complete: function (msg) {
+
+		}
+	});
+}
+
+
+/*****************************************************
+** TTShop
+******************************************************/
+var TTShop = (function (module) {
+
+	//打开登录弹出窗口
+	module.OpenLoginPop = function () {
+		$(".login-pop").show();
+	};
+	//获取cookie
+	module.GetCookie = function (c_name) {
+		if (document.cookie.length > 0) {　　//先查询cookie是否为空，为空就return ""
+			c_start = document.cookie.indexOf(c_name + "=")　　//通过String对象的indexOf()来检查这个cookie是否存在，不存在就为 -1　　
+			if (c_start != -1) {
+				c_start = c_start + c_name.length + 1　　//最后这个+1其实就是表示"="号啦，这样就获取到了cookie值的开始位置
+				c_end = document.cookie.indexOf(";", c_start)　　//其实我刚看见indexOf()第二个参数的时候猛然有点晕，后来想起来表示指定的开始索引的位置...这句是为了得到值的结束位置。因为需要考虑是否是最后一项，所以通过";"号是否存在来判断
+				if (c_end == -1) c_end = document.cookie.length
+				return unescape(document.cookie.substring(c_start, c_end))　　//通过substring()得到了值。想了解unescape()得先知道escape()是做什么的，都是很重要的基础，想了解的可以搜索下，在文章结尾处也会进行讲解cookie编码细节
+			}
+		}
+		return ""
+	}
+
+	module.GetLoginHtml = function () {
+		$.ajax({
+			type: "POST",
+			url: "/Common/GetLoginHtml",
+			async: false,
+			beforeSend: function () {
+			},
+			success: function (result) {
+				var obj = $("div.navright ul");
+				if (obj != null && obj != undefined && obj.length > 0) {
+					$("div.navright ul")[0].innerHTML = result.Msg;
+				}
+			},
+			complete: function (msg) {
+
+			}
+		});
+	};
+
+	//退出登录
+	module.LogOff = function () {
+		layer.msg('确定要退出登录吗？', {
+			time: 0
+			, btn: ['确定', '关闭']
+			, yes: function (index) {
+				$.ajax({
+					type: "POST",
+					url: "/account/logoff",
+					async: false,
+					beforeSend: function () {
+					},
+					success: function (result) {
+						//history.go(0);         
+						if (result.IsSucess == true) {
+							var res = result.DataObj;
+							if (res == null || res == "") {
+								history.go(0);
+							}
+							else {
+								$.getScript(result.DataObj, function (data, textStatus, jqXHR) {
+									// data 是该请求返回的数据(可能经过处理)
+									// textStatus 可能是"success"、 "notmodified"等
+									// jqXHR 是经过jQuery封装的XMLHttpRequest对象(保留其本身的所有属性和方法)
+									history.go(0);
+								});
+							}
+						}
+						else {
+							layer.msg(result.Msg, { icon: 5 });
+						}
+					},
+					complete: function (msg) {
+
+					}
+				});
+			}
+		});
+	};
+
+	module.Yuyue = function () {
+		var username = $("#res_username").val();
+		if (username == undefined || username == null || username == "") {
+			layer.msg('请填写称谓！', { icon: 5 });
+			return;
+		}
+		var phone = $("#res_phone").val();
+		if (!RegMobileNo(phone)) {
+			layer.msg('手机号码错误！', { icon: 5 });
+			return;
+		}
+		var toshope = $("#res_express").val();
+		if (toshope == undefined || toshope == null || toshope == "0" || $.trim(toshope) == "-2") {
+			layer.msg('请在上方选择门店！', { icon: 5 });
+			return;
+		}
+		var reservetime = $("#res_reservetime").val();
+		if (reservetime == undefined || reservetime == null || reservetime == "") {
+			layer.msg('请填写预约时间！', { icon: 5 });
+			return;
+		}
+
+		var reservehour = "";
+		if ($("#res_reservehour") && $("#res_reservehour").length > 0) {
+			reservehour = $("#res_reservehour").val();
+			if (reservehour == undefined || reservehour == null || $.trim(reservehour) == "") {
+				layer.msg('请选择预约时段！', { icon: 5 });
+				return;
+			}
+		}
+
+		var type = "";
+		if ($("#res_type") && $("#res_type").length > 0) {
+			type = $("#res_type").val();
+			if (type == undefined || type == null || $.trim(type) == "") {
+				layer.msg('请选择预约类型！', { icon: 5 });
+				return;
+			}
+		}
+
+		var res_radio = "";
+		if ($("input[name='sex']") && $("input[name='sex']:checked").length > 0) {
+			res_radio = $("input[name='sex']:checked").val();
+		}
+		var data = {};
+		data.username = username + res_radio;
+		data.phone = phone;
+		data.toshope = toshope;
+		data.toshopeStr = $("#res_express").find("option:selected").text();;
+		data.reservetime = reservetime;
+		data.reservehour = reservehour;
+		data.type = type;
+		$.ajax({
+			type: "POST",
+			url: "/home/AddReservation",
+			data: data,
+			dataType: "JSON",
+			async: false,
+			success: function (result) {
+			    if (result.IsSucess == true) {
+			        layer.msg(result.Msg, { icon: 6 });
+					$("input").val('');
+				}
+				else {
+			        layer.msg(result.Msg, { icon: 5 });
+				}
+			}
+		});
+	}
+
+
+	module.YsYuyue = function () {
+		var username = $("#TxtUsername").val();
+		if (username == undefined || username == null || username == "") {
+			layer.msg('请填写称谓！', { icon: 5 });
+			return;
+		}
+		var phone = $("#TxtPhone").val();
+		if (!RegMobileNo(phone)) {
+			layer.msg('手机号码错误！', { icon: 5 });
+			return;
+		}
+		var reservehour = "";
+		if ($("#TxtReservehour") && $("#TxtReservehour").length > 0) {
+			reservehour = $("#TxtReservehour").val();
+			if (reservehour == undefined || reservehour == null || $.trim(reservehour) == "") {
+				layer.msg('请选择预约时段！', { icon: 5 });
+				return;
+			}
+		}
+		var Descript = $("#txtDescript").val();
+		var QQOrWX = $("#txtQQOrWX").val();
+		var YsMoney = $('#txtYsMoney option:selected').text();
+
+		var data = {};
+		data.username = username;
+		data.phone = phone;
+		data.QQOrWX = QQOrWX;
+		data.Descript = Descript;
+		data.reservehour = reservehour;
+		data.YsMoney = YsMoney;
+		$.ajax({
+			type: "POST",
+			url: "/home/AddYSReservation",
+			data: data,
+			dataType: "html",
+			async: false,
+			success: function (msg) {
+				if (msg == "1") {
+					layer.msg('预约成功！', { icon: 6 });
+					$("input").val('');
+				}
+				else {
+					layer.msg('预约失败！' + msg, { icon: 5 });
+				}
+			}
+		});
+	}
+
+	//搜索商品
+	module.SearchProduct = function () {
+		//var arrUrl = UrlRegEx(location.href);
+		//var dir = arrUrl[4];
+		//var search = arrUrl[5];
+		if ($("#searchLinkDynamic")) {
+			$("#searchLinkDynamic").remove();
+		}
+		var key = $("#schProduct").val();
+		var strUrl = "";
+		var searchtype = key.toLowerCase().indexOf("crd");
+		if (searchtype == 0) {
+			strUrl = "http://" + window.location.host + "/diamond/?keyword=" + key;
+		} else {
+			strUrl = "http://" + window.location.host + "/product/search?key=" + key + "&page=1";
+		}
+
+		$("body").append('<a target="_blank" href="' + strUrl + '" id="searchLinkDynamic"></a>');
+		document.getElementById("searchLinkDynamic").click();
+		//window.open(strUrl);
+		//window.location.href = strUrl;
+	};
+
+	//领取优惠券
+	module.AddCoupon = function (no) {
+		$.ajax({
+			type: "POST",
+			url: "/memberinfo/AddClientCoupon",
+			data: { "JBatchNo": no },
+			async: false,
+			beforeSend: function () {
+				layer.msg('正在处理，请稍后...', { icon: 6 });
+			},
+			success: function (result) {
+			    if (result.IsSucess == true) {
+			        var dom = $(".youhuiquan").find("li[datayhqli='" + no + "']");
+			        dom.find(".divyhqlq").removeClass("divyhqlq").addClass("divyhqlqhui");
+			        dom.find(".rightkaquanred").removeClass("rightkaquanred").addClass("rightkaquanhui");
+			        dom.find(".rightkaquanhui span").html("已经领取");
+			        dom.find("dd[class='priceyhqtext']").removeClass("priceyhqtext").addClass("priceyhqtexthui");
+			        $(".rightkaquanhui").click(function (event) {
+			            event.preventDefault();
+			        })
+					layer.msg(result.Msg,
+						{ time: 1000, icon: 6 }
+					);
+				} else {
+					if (result.Msg == undefined) {
+						window.document.location.reload();
+					} else {
+						layer.msg(result.Msg, { icon: 5 });
+					}
+				}
+			}
+		});
+	}
+
+	//弹框登录
+	module.LayerLogin = function (_Type) {
+		var href = window.location.href;
+		href = href.substring(href.indexOf(_Type));
+		layer.open({
+			type: 2,
+			title: 'CRD克徕帝-登录',
+			area: ['500px', '360px'],
+			shade: 0.5,
+			shadeClose: true,
+			content: '/account/layerlogin/?ref=' + href
+		});
+
+	}
+	//手机弹框登录
+	module.MobileLayerLogin = function (_Type) {
+		var href = window.location.href;
+		href = href.substring(href.indexOf(_Type));
+		layer.open({
+			type: 2,
+			title: 'CRD克徕帝-登录',
+			area: ['80%', '320px'],
+			shade: 0.5,
+			shadeClose: true,
+			content: '/account/layerlogin/?ref=' + href
+		});
+
+	}
+
+	return module;
+})(TTShop || {});
+
+/********************************************************************  
+ **  
+ **比较通用的正则表达式，捕获url各个部分。  
+ **注意各部分基本上都包含了相应的符号，例如端口号如果捕获成功，那就是':80'  
+ **函数返回一个正则表达式捕获数组。  
+ **注意，现在获得的是一个数组，所以需要通过arr[i]的方式引用。  
+ **正则表达式所有的匹配说明::  
+ **$0  
+ **整个url本身。如果$0==null，那就是我的正则有意外，未捕获的可能。  
+ **有一种未捕获的情况已经被发现，那就是域名后面没有以'/'结尾，如：'http://localhost'  
+ **但是经过我的测试，IE和firefox会自动把域名后面加上'/'的。  
+ **$1-$4  协议，域名，端口号，还有最重要的路径path！  
+ **$5-$7  文件名，锚点(#top)，query参数(?id=55)  
+ **  
+*********************************************************************/
+
+function UrlRegEx(url) {
+	if (url != undefined && url != null && url.length > 5) {
+		var strHtml = url.substr(url.length - 5, 5);
+		if (strHtml != ".html" && strHtml.substr(strHtml.length - 1, 1) != "/") {
+			url = url + "/";
+		}
+	}
+
+	//如果加上/g参数，那么只返回$0匹配。也就是说arr.length = 0   
+	var re = /(\w+):\/\/([^\:|\/]+)(\:\d*)?(.*\/)([^#|\?|\n]+)?(#.*)?(\?.*)?/i;
+	//re.exec(url);   
+	var arr = url.match(re);
+	return arr;
+}
+//--------示例代码：   
+function getPath() {
+	return UrlRegEx(location.href)[4];
+}

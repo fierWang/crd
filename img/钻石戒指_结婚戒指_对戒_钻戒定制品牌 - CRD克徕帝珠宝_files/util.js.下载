@@ -1,0 +1,727 @@
+﻿/**************/
+/*JS函数库*/
+/**************/
+/*获取字符串长度 中文算2 英文算1*/
+function GetCharLength(str) {
+    var iLength = 0;
+    for (var i = 0; i < str.length; i++) {
+        if (str.charCodeAt(i) > 255) {
+            iLength += 2;
+        }
+        else {
+            iLength += 1;
+        }
+    }
+    return iLength;
+}
+/*获取网页中的控件*/
+var $$ = function (ID) { return document.getElementById(ID); };
+/*去除字符串两边的空格*/
+String.prototype.Trim = function () {
+    return this.replace(/(^\s*)|(\s*$)/g, "");
+}
+/*字符串超出省略*/
+String.prototype.cutstr = function (len) {
+    var restr = this;
+    var wlength = this.replace(/[^\x00-\xff]/g, "**").length;
+    if (wlength > len) {
+        for (var k = len / 2; k < this.length; k++) {
+            if (this.substr(0, k).replace(/[^\x00-\xff]/g, "**").length >= len) {
+                restr = this.substr(0, k) + "...";
+                break;
+            }
+        }
+    }
+    return restr;
+}
+/** 在字符串末尾追加字符串 **/
+String.prototype.append = function (str) {
+    return this.concat(str);
+}
+/** 比较两个字符串是否相等，也可以直接用 == 进行比较 **/
+String.prototype.equal = function (str) {
+    if (this.length != str.length) {
+        return false;
+    }
+    else {
+        for (var i = 0; i < this.length; i++) {
+            if (this.charAt(i) != str.charAt(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+/** 保留数字 **/
+String.prototype.getNum = function () {
+    return this.replace(/[^d]/g, "");
+}
+/** 保留字母 **/
+String.prototype.getEn = function () {
+    return this.replace(/[^A-Za-z]/g, "");
+}
+/** 保留中文 **/
+String.prototype.getCn = function () {
+    return this.replace(/[^u4e00-u9fa5uf900-ufa2d]/g, "");
+}
+// String转化为Number  
+String.prototype.ToInt = function () {
+    return isNaN(parseInt(this)) ? this.toString() : parseInt(this);
+};
+/*重定义精确度函数*/
+Number.prototype.toFixed = function (len) {
+    var a = Math.round(this * Math.pow(10, len)) / Math.pow(10, len)
+    var b = a + "";
+    var c = b.split(".");
+    var d = "0000000000";
+    if (c.length == 1) {
+        if (len == 0)
+            b = c[0];
+        else
+            b = c[0] + "." + d.substr(0, len);
+    }
+    else {
+        b = c[0] + "." + (c[1] + d).substr(0, len);
+    }
+    return b;
+}
+/*自定义去小数末尾0的方法*/
+Number.prototype.Save = function (MinLen) {
+    var Num1 = this.toFixed(4).split(".");
+    var Num2 = Num1[1]
+    var MaxLen = Num2.length;
+    var Len = MinLen;
+    for (var i = MaxLen; i >= MinLen; i--) {
+        if (Num2.substr(i - 1, 1) != "0") {
+            Len = i;
+            break;
+        }
+    }
+    return Num1[0] + "." + Num1[1].substr(0, Len);
+}
+
+
+/*获取网页地址栏参数*/
+function QueryStringUrl(key) {
+    var locString = location.search;
+    var reg = new RegExp("(\\?|\\&)" + key + "=([^\\&]*)(\\&?)", "i").exec(locString);
+    if (reg != null) {
+        return RegExp.$2;
+    }
+    else {
+        return "";
+    }
+}
+/*设置网页地址栏参数*/
+function changeURLPar(destiny, par, par_value) {
+    var pattern = par + '=([^&]*)';
+    var replaceText = par + '=' + par_value; 
+    if (destiny.match(pattern)) {
+        var tmp = '/' + par + '=[^&]*/';
+        tmp = destiny.replace(eval(tmp), replaceText);
+        return (tmp);
+    } else {
+        if (destiny.match('[\?]')) {
+            return destiny + '&' + replaceText;
+        } else {
+            return destiny + '?' + replaceText;
+        }
+    }
+    return destiny + '\n' + par + '\n' + par_value;
+}
+/*设置网页地址*/
+function setPath(currentUrl, name, pvalue) {
+    if (currentUrl.indexOf("?") > 0) {
+        if (currentUrl.indexOf(name) > 0) {
+            currentUrl = changeURLPar(currentUrl, name, pvalue);
+        } else {
+            currentUrl += "&" + name + "=" + pvalue;
+        }
+    } else {
+        if (currentUrl.indexOf(name) > 0) {
+            currentUrl = changeURLPar(currentUrl, name, pvalue);
+        } else {
+            currentUrl += "?" + name + "=" + pvalue;
+        }
+    }
+    return currentUrl;
+}
+
+/*获取客户浏览器类型*/
+function BrowserType() {
+    var IeType = "";
+    try {
+        var _Agt = navigator.userAgent.toLowerCase();
+        var _bs = /(firefox|netscape|opera|chrome|msie|safari).?[\d\.]+/.exec(_Agt);
+        IeType = _bs[0];
+    }
+    catch (e) {
+        IeType = "Browser_Error";
+    }
+    return IeType;
+}
+/*验证手机号码*/
+function RegMobileNo(strMobileNo) {
+    var regMobileNo = /^[0-9]{11}$/;
+    if (regMobileNo.test(strMobileNo)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+/*判断是否为空*/
+function isEmpty(str) {
+    if (str == null || typeof str == "undefined" || str.trim() == "") {
+        return true;
+    } else {
+        return false;
+    }
+}
+/*验证邮箱*/
+function RegEmail(strEmail) {
+    var regEmail = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+    if (regEmail.test(strEmail)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+/*验证中文*/
+function RegChina(strChina) {
+    var regChina = /^[\u0391-\uFFE5]+$/;
+    if (regChina.test(strChina)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+/*验证QQ*/
+function RegQq(strQq) {
+    var regQq = /^[^0]\d{3,10}$/;
+    if (regQq.test(strQq)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+/*验证手机*/
+function RegPhoneNumber(strPhoneNumber) {
+    var regPhoneNumber = /^(((13[0-9]{1})|15[0-9]{1}|18[0-9]{1}|14[0-9]{1}|)+\d{8})+$/;
+    if (regPhoneNumber.test(strPhoneNumber)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+/*日期比较*/
+function CompareDate(parDate1, parDate2) {
+    var strDate1 = parDate1.split("-");
+    var strDate2 = parDate2.split("-");
+    var strYear1 = strDate1[0];
+    var strMonth1 = strDate1[1];
+    var strDay1 = strDate1[2];
+    var strYear2 = strDate2[0];
+    var strMonth2 = strDate2[1];
+    var strDay2 = strDate2[2];
+    var datDate1 = new Date(strYear1, strMonth1, strDay1);
+    var datDate2 = new Date(strYear2, strMonth2, strDay2);
+    if (datDate2 <= datDate1) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+/*验证是否为钱单位*/
+function RegCurrency(strCurrency) {
+    var regsCurrency = /^\d+(\.\d+)?$/;
+    if (regsCurrency.test(strCurrency)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+/*验证数字*/
+function RegNumber(strNumber) {
+    var regNumber = /^\d+$/;
+    if (regNumber.test(strNumber)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+/*验证数值*/
+function RegDouble(strDouble) {
+    var regDouble = /^[-\+]?\d+(\.\d+)?$/;
+    if (regDouble.test(strDouble)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+/*==
+根据〖中华人民共和国国家标准 GB 11643-1999〗中有关公民身份号码的规定，公民身份号码是特征组合码，由十七位数字本体码和一位数字校验码组成。排列顺序从左至右依次为：六位数字地址码，八位数字出生日期码，三位数字顺序码和一位数字校验码。
+    地址码表示编码对象常住户口所在县(市、旗、区)的行政区划代码。
+    出生日期码表示编码对象出生的年、月、日，其中年份用四位数字表示，年、月、日之间不用分隔符。
+    顺序码表示同一地址码所标识的区域范围内，对同年、月、日出生的人员编定的顺序号。顺序码的奇数分给男性，偶数分给女性。
+    校验码是根据前面十七位数字码，按照ISO 7064:1983.MOD 11-2校验码计算出来的检验码。
+
+出生日期计算方法。
+    15位的身份证编码首先把出生年扩展为4位，简单的就是增加一个19或18,这样就包含了所有1800-1999年出生的人;
+    2000年后出生的肯定都是18位的了没有这个烦恼，至于1800年前出生的,那啥那时应该还没身份证号这个东东，⊙﹏⊙b汗...
+下面是正则表达式:
+ 出生日期1800-2099  (18|19|20)?\d{2}(0[1-9]|1[12])(0[1-9]|[12]\d|3[01])
+ 身份证正则表达式 /^\d{6}(18|19|20)?\d{2}(0[1-9]|1[12])(0[1-9]|[12]\d|3[01])\d{3}(\d|X)$/i            
+ 15位校验规则 6位地址编码+6位出生日期+3位顺序号
+ 18位校验规则 6位地址编码+8位出生日期+3位顺序号+1位校验位
+ 
+ 校验位规则     公式:∑(ai×Wi)(mod 11)……………………………………(1)
+                公式(1)中： 
+                i----表示号码字符从由至左包括校验码在内的位置序号； 
+                ai----表示第i位置上的号码字符值； 
+                Wi----示第i位置上的加权因子，其数值依据公式Wi=2^(n-1）(mod 11)计算得出。
+                i 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
+                Wi 7 9 10 5 8 4 2 1 6 3 7 9 10 5 8 4 2 1
+
+*/
+//身份证号合法性验证 
+//支持15位和18位身份证号
+//支持地址编码、出生日期、校验位验证
+function RegIDCard(code) {
+    var city = { 11: "北京", 12: "天津", 13: "河北", 14: "山西", 15: "内蒙古", 21: "辽宁", 22: "吉林", 23: "黑龙江 ", 31: "上海", 32: "江苏", 33: "浙江", 34: "安徽", 35: "福建", 36: "江西", 37: "山东", 41: "河南", 42: "湖北 ", 43: "湖南", 44: "广东", 45: "广西", 46: "海南", 50: "重庆", 51: "四川", 52: "贵州", 53: "云南", 54: "西藏 ", 61: "陕西", 62: "甘肃", 63: "青海", 64: "宁夏", 65: "新疆", 71: "台湾", 81: "香港", 82: "澳门", 91: "国外 " };
+    var tip = "";
+    var pass = true;
+
+    if (!code || !/^\d{6}(18|19|20)?\d{2}(0[1-9]|1[12])(0[1-9]|[12]\d|3[01])\d{3}(\d|X)$/i.test(code)) {
+        tip = "身份证号格式错误";
+        pass = false;
+    }
+    else if (!city[code.substr(0, 2)]) {
+        tip = "地址编码错误";
+        pass = false;
+    }
+    else {
+        //18位身份证需要验证最后一位校验位
+        if (code.length == 18) {
+            code = code.split('');
+            //∑(ai×Wi)(mod 11)
+            //加权因子
+            var factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+            //校验位
+            var parity = [1, 0, 'X', 9, 8, 7, 6, 5, 4, 3, 2];
+            var sum = 0;
+            var ai = 0;
+            var wi = 0;
+            for (var i = 0; i < 17; i++) {
+                ai = code[i];
+                wi = factor[i];
+                sum += ai * wi;
+            }
+            var last = parity[sum % 11];
+            if (parity[sum % 11] != code[17]) {
+                tip = "校验位错误";
+                pass = false;
+            }
+        }
+    }
+    //if (!pass) alert(tip);
+    return pass;
+}
+
+//检查是否是日期格式 
+function isDate(datestr) {
+    var result = datestr.match(/((^((1[8-9]\d{2})|([2-9]\d{3}))(-)(10|12|0?[13578])(-)(3[01]|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))(-)(11|0?[469])(-)(30|[12][0-9]|0?[1-9])$)|(^((1[8-9]\d{2})|([2-9]\d{3}))(-)(0?2)(-)(2[0-8]|1[0-9]|0?[1-9])$)|(^([2468][048]00)(-)(0?2)(-)(29)$)|(^([3579][26]00)(-)(0?2)(-)(29)$)|(^([1][89][0][48])(-)(0?2)(-)(29)$)|(^([2-9][0-9][0][48])(-)(0?2)(-)(29)$)|(^([1][89][2468][048])(-)(0?2)(-)(29)$)|(^([2-9][0-9][2468][048])(-)(0?2)(-)(29)$)|(^([1][89][13579][26])(-)(0?2)(-)(29)$)|(^([2-9][0-9][13579][26])(-)(0?2)(-)(29)$))/);
+    if (result == null) {
+        return false;
+    }
+    return true;
+}
+
+//判断输入的字符是否为中文 
+function IsChinese(str) {
+    if (str.length != 0) {
+       var reg = /^[\u0391-\uFFE5]+$/;
+        if (!reg.test(str)){
+            return false;
+        }
+    }
+    return true;
+}
+
+/*验证日期*/
+function RegDate(strDate) {
+    var regDate = /^([0-9]{1,2})[./]{1}([0-9]{1,2})[./]{1}([0-9]{4})$/;
+    if (regDate.test(strDate)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//清除字符串两头的空格
+function Trim(str) {
+    return str.replace(/(^\s*)|(\s*$)/g, "");
+}
+/*回车事件*/
+function EventEnter(evt, para, option) {
+    evt = evt ? evt : (window.event ? window.event : null);
+    if (evt.keyCode == 13) {
+        switch (para) {
+            case 0:
+                $$(option).focus();
+                break;
+            case 1:
+                eval(option);
+                break;
+        }
+        return false;
+    }
+}
+/*禁用F5按键*/
+var booStopF5 = true;
+/*屏蔽回车和F5*/
+function CheckKeyDown(e) {
+    e = e || window.event;
+    if ((e.which || e.keyCode) == 116 && booStopF5) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        else {
+            event.keyCode = 0;
+            e.returnValue = false;
+        }
+    }
+    else {
+        var evtnode = e.srcElement ? e.srcElement : e.target;
+        if ((e.which || e.keyCode) == 13 && evtnode.nodeName != "TEXTAREA") {
+            return false;
+        }
+    }
+}
+/*网页路径*/
+var strWebPath = "";
+/*检查路径*/
+function CheckPath() {
+    var Path = "";
+    var CurrentPath = window.location.href.split("&")[0].split("/");
+    var len1 = 4;
+    if (document.domain.indexOf("localhost") == -1) {
+        len1 = 3;
+    }
+    var len = CurrentPath.length - len1;
+    for (var i = 0; i < len; i++) {
+        Path += "../";
+    }
+    return Path;
+}
+/*下拉框初始化*/
+function DropInit(ID, Value, Text) {
+    $$(ID).options.length = 0;
+    $$(ID).options.add(document.createElement("OPTION"));
+    $$(ID).options[0].text = Text;
+    $$(ID).options[0].value = Value;
+}
+/*空函数*/
+function NullFunction() {
+    ;
+}
+/*分离鼠标事件*/
+function DetachMouseOutEvent(ID) {
+    $$(ID).onmouseout =
+    function () {
+        NullFunction();
+    }
+}
+/*用户控件绝对定位*/
+function PositionLayer(SourceID, DestID, OffsetTop, OffsetLeft) {
+    var tbMenu = document.getElementById(SourceID);
+    var tdId = document.getElementById(DestID);
+    var MenuStyle = tbMenu.style;
+    var MeTop = tdId.offsetTop;
+    var MeLeft = tdId.offsetLeft;
+    while (tdId = tdId.offsetParent) {
+        MeTop += tdId.offsetTop;
+        MeLeft += tdId.offsetLeft;
+    }
+    MenuStyle.top = Number(MeTop + OffsetTop) + "px";
+    MenuStyle.left = Number(MeLeft + OffsetLeft) + "px";
+}
+/*加载JS*/
+function LoadJsFile(strUrl) {
+    var datTime = new Date();
+    var eleUrl = document.createElement("script");
+    eleUrl.setAttribute("type", "text/javascript");
+    eleUrl.setAttribute("src", strUrl + "?Time=" + datTime.getTime());
+    document.body.appendChild(eleUrl);
+}
+/*关闭当前窗口*/
+function CloseWindow() {
+    window.opener = null;
+    window.self.close();
+}
+/*关闭父窗口*/
+function CloseParentWindow() {
+    top.window.opener = null;
+    top.window.self.close();
+}
+/*清除文本框内容*/
+function ClearInputText(strID, strText) {
+    if ($$(strID).value == strText) {
+        $$(strID).value = "";
+    }
+}
+//文本框只能输入数字
+function clearNoNum(event, obj) {
+    //响应鼠标事件，允许左右方向键移动
+    event = window.event || event;
+    if (event.keyCode == 37 | event.keyCode == 39) {
+        return;
+    }
+    //先把非数字的都替换掉，除了数字
+    obj.value = obj.value.replace(/[^\d]/g, "");
+
+    if (obj.min != null && obj.min != undefined) {
+        if (!isNaN(obj.min)) {
+            var min = parseInt(obj.min);
+            if (parseInt(obj.value) < min)
+                obj.value = min;
+        }
+    }
+}
+//文本框只能输入数字和.
+function clearNoNums(event, obj) {
+    //响应鼠标事件，允许左右方向键移动
+    event = window.event || event;
+    if (event.keyCode == 37 | event.keyCode == 39) {
+        return;
+    }
+    //先把非数字的都替换掉，除了数字和.
+    obj.value = obj.value.replace(/[^\d.]/g, "");
+    //必须保证第一个为数字而不是.
+    obj.value = obj.value.replace(/^\./g, "");
+    //保证只有出现一个.而没有多个.
+    obj.value = obj.value.replace(/\.{2,}/g, ".");
+    //保证.只出现一次，而不能出现两次以上
+    obj.value = obj.value.replace(".", "$#$").replace(/\./g, "").replace("$#$", ".");
+}
+function checkNums(obj) {
+    //为了去除最后一个.
+    obj.value = obj.value.replace(/\.$/g, "");
+}
+//清除所有文本框和下拉框内容
+function clearVal() {
+    $("input").val('');
+    $("select").val('');
+}
+
+/*************/
+/*XmlHttp调用*/
+/*************/
+/*xmlHttp调用[异步]*/
+function RequestXML(strUrl, strPostValue, strFuntionName) {
+    var xmlHttp;
+    if (window.ActiveXObject) {
+        xmlHttp = new ActiveXObject("Microsoft.XMLHttp");
+    }
+    else {
+        if (window.XMLHttpRequest) {
+            xmlHttp = new XMLHttpRequest();
+        }
+    }
+    xmlHttp.open("Post", strUrl, true)
+    xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xmlHttp.onreadystatechange = function () {
+        ResponseXML(xmlHttp, strFuntionName)
+    }
+    xmlHttp.send(strPostValue);
+}
+/*xmlHttp调用[同步]*/
+function RequestXML1(strUrl, strPostValue, strFuntionName) {
+    var xmlHttp;
+    if (window.ActiveXObject) {
+        xmlHttp = new ActiveXObject("Microsoft.XMLHttp");
+    }
+    else {
+        if (window.XMLHttpRequest) {
+            xmlHttp = new XMLHttpRequest();
+        }
+    }
+    xmlHttp.open("Post", strUrl, false)
+    xmlHttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xmlHttp.send(strPostValue);
+    /*结果处理*/
+    if (xmlHttp.readyState == 4) {
+        var intStatus = xmlHttp.status;
+        if (intStatus == 200) {
+            eval(strFuntionName);
+        }
+        else {
+            alert("程序异常，找不到被调用的页面。");
+        }
+    }
+}
+/*xmlHttp结果*/
+function ResponseXML(xmlHttp, strFuntionName) {
+    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+        eval(strFuntionName);
+    }
+    else {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 404) {
+            alert("程序异常，找不到被调用的页面。");
+        }
+    }
+}
+
+/**********/
+/*分页函数*/
+/**********/
+/*当前页号，每页记录数，总记录数*/
+var intPageIndex = 1;
+var intPageSize = 20;
+var intRecordCount = 0;
+/*页码列表*/
+function PageList(strFunName) {
+    /*总页数*/
+    var intPageCount = parseInt((parseInt(intRecordCount) + parseInt(intPageSize) - 1) / parseInt(intPageSize));
+    if (intPageCount <= 1) {
+        return "";
+    }
+    /*页码距*/
+    var intPageCurrent = 10;
+    /*起始页码*/
+    var intStartPage = (parseInt((intPageIndex + intPageCurrent - 1) / intPageCurrent) - 1) * intPageCurrent + 1;
+    /*结束页码*/
+    var intEndPage = intStartPage + intPageCurrent - 1;
+    if (intPageIndex % intPageCurrent == 0) {
+        intStartPage++;
+        intEndPage++;
+    }
+    if (intPageIndex % intPageCurrent - 1 == 0 && intPageIndex != 1) {
+        intStartPage--;
+        intEndPage--;
+    }
+    if (intEndPage >= intPageCount) {
+        intEndPage = intPageCount;
+    }
+    /*上一页，下一页*/
+    var intUpPage = intPageIndex - 1;
+    var intDownPage = intPageIndex + 1;
+    var strUpPage = "<img style='cursor:pointer;' onclick=\"" + strFunName + "(" + intUpPage + ")\" src=\"" + strWebPath + "Images/Icon/PagePre.gif\" />";
+    var strDownPage = "<img style='cursor:pointer;' onclick=\"" + strFunName + "(" + intDownPage + ")\" src=\"" + strWebPath + "Images/Icon/PageNext.gif\" />";
+    if (intUpPage < 1) {
+        intUpPage = 1;
+        strUpPage = "";
+    }
+    if (intDownPage > intPageCount) {
+        intDownPage = intPageCount;
+        strDownPage = "";
+    }
+    /*生成页码列表*/
+    var strPageList = "<div class=\"pageInde\">" + strUpPage;
+    for (var i = intStartPage; i <= intEndPage; i++) {
+        if (intPageIndex == i) {
+            /*当前页码*/
+            strPageList += "<span class=\"thisPage\">" + i + "</span>";
+        }
+        else {
+            strPageList += "<a href=\"javascript:" + strFunName + "(" + i + ");\">" + i + "</a>";
+        }
+    }
+    strPageList = strPageList + strDownPage + "</div>";
+    strPageList += "总共：" + intRecordCount + "&nbsp;条&nbsp;&nbsp;共：" + intPageCount + "&nbsp;&nbsp;页&nbsp;当前第：" + intPageIndex + "&nbsp;页";
+    return strPageList;
+}
+/***前台 页码列表***/
+function PageListUi(strFunName) {
+    /***总页数***/
+    var intPageCount = parseInt((parseInt(intRecordCount) + parseInt(intPageSize) - 1) / parseInt(intPageSize));
+    if (intPageCount <= 1) {
+        return "";
+    }
+    /***页码距***/
+    var intPageCurrent = 5;
+    /***起始页码***/
+    var intStartPage = (parseInt((intPageIndex + intPageCurrent - 1) / intPageCurrent) - 1) * intPageCurrent + 1;
+    /***结束页码***/
+    var intEndPage = intStartPage + intPageCurrent - 1;
+    if (intPageIndex % intPageCurrent == 0) {
+        intStartPage++;
+        intEndPage++;
+    }
+    if (intPageIndex % intPageCurrent - 1 == 0 && intPageIndex != 1) {
+        intStartPage--;
+        intEndPage--;
+    }
+    if (intEndPage >= intPageCount) {
+        intEndPage = intPageCount;
+    }
+    /***上一页，下一页***/
+    var intUpPage = intPageIndex - 1;
+    var intDownPage = intPageIndex + 1;
+    var strUpPage = "<a href=\"javascript:" + strFunName + "(" + intUpPage + ");\">上一页</a>\n";
+    var strDownPage = "<a href=\"javascript:" + strFunName + "(" + intDownPage + ");\">下一页</a>\n";
+    if (intUpPage < 1) {
+        intUpPage = 1;
+        strUpPage = "";
+    }
+    if (intDownPage > intPageCount) {
+        intDownPage = intPageCount;
+        strDownPage = "";
+    }
+    /***生成页码列表***/
+    var strPageList = "";
+    for (var i = intStartPage; i <= intEndPage; i++) {
+        if (intPageIndex == i) {
+            /***当前页码***/
+            strPageList += "<a class=\"current\" href=\"javascript:;\">" + i + "</a>\n";
+        }
+        else {
+            strPageList += "<a href=\"javascript:" + strFunName + "(" + i + ");\">" + i + "</a>\n";
+        }
+    }
+    strPageList = "<div class=\"page\">\n" + strUpPage + strPageList + strDownPage + "</div>";
+    return strPageList;
+}
+
+/// <summary>
+/// 去字符串前面的0
+/// </summary>
+/// <param name="str"></param>
+/// <returns></returns>
+function OutputZero(str) {
+    //var i = 0;
+    //if (str.length > 0 && str.indexOf(".") < 0)
+    //{
+    //    while (str.substring(i, 1) == "0")
+    //    {
+    //        str = str.substring(i + 1, str.length - 1);
+    //    }
+    //}
+    str = str.replace(/\b(0+)/gi, "");
+    return str;
+}
+/**
+ * 获取当前页面相对url地址
+ * @returns {} 
+ */
+function GetCurrentUrl() {
+    var url = document.location.toString();
+    var arrUrl = url.split("//");
+
+    var start = arrUrl[1].indexOf("/");
+    var relUrl = arrUrl[1].substring(start); //stop省略，截取从start开始到结尾的所有字符
+
+    /*if (relUrl.indexOf("?") != -1) {
+        relUrl = relUrl.split("?")[0];
+    }*/
+    return escape(relUrl);
+}
